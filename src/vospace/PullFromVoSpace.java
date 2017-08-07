@@ -21,7 +21,7 @@ public class PullFromVoSpace extends JobThread {
 		System.out.println("******** Execution du job "+job.getJobId()+" *********");
 		System.out.println("**************************************************");
 		try {
-			vo.moveNode("vos://example.com!vospace/iyapici/CDS/testMadjid", "vos://example.com!vospace/mydir/.auto");
+			vo.moveNode("vos://example.com!vospace/iyapici/CDS/11972df2", "vos://example.com!vospace/iyapici/CDS/qwerty/.auto");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -29,7 +29,9 @@ public class PullFromVoSpace extends JobThread {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	
+		System.out.println("**************************************************");
+		System.out.println("********* job "+job.getJobId()+" "+job.getPhase() +" ***********");
+		System.out.println("**************************************************");
 //		String xml = job.getJobInfo().getXML("target");
 //		int executionTime = 5;
 //		int count = 1;

@@ -14,56 +14,120 @@ import org.json.*;
 
 
 public class Db {
-		
-	
-	private MongoCollection<Document> collection() {
-		MongoClient m = ConnectionFactory.CONNECTION.getClient();
-		MongoDatabase database = m.getDatabase("vospace");
-		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
-		return collection;
-	}
 	
 	public String getNode(BasicDBObject query) throws UnknownHostException {
 	Document myDoc;
-//	BasicDBObject query = new BasicDBObject();
-//	query.put("node", node);
-//	query.put("parent", parent);
-//	query.put("ancestor", ancestor);
-	
+	MongoClient m = new MongoClient();
 	try {
-//		MongoDatabase database = m.getDatabase("vospace");
-//		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
-		myDoc = collection().find(query).first();
+		MongoDatabase database = m.getDatabase("vospace");
+		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
+		myDoc = collection.find(query).first();
 		myDoc.remove("_id");
-//		System.out.println(myDoc.toJson());
+		m.close();
+//		System.out.println(myDoc);
 		if (myDoc!=null) {
 			return myDoc.toJson();
 		}
 	} catch (Exception e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
-	}
+		m.close();
+	} 
 	return "NodeNotFound";
 	}
 	
-	public void setBusy(String node, String parent, List<String> ancestor) throws UnknownHostException, JSONException {
+	public void setNode(BasicDBObject query, BasicDBObject setQuery) {
+		MongoClient m = new MongoClient();
+		MongoDatabase database = m.getDatabase("vospace");
+		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
+		collection.updateOne(query, setQuery);
+		m.close();
+	}
+	
+	public BasicDBObject query(String node, String parent, List<String> ancestor) {
 		BasicDBObject query = new BasicDBObject();
 		query.put("node", node);
 		query.put("parent", parent);
 		query.put("ancestor", ancestor);
+		return query;
+	}
+	
+	private BasicDBObject query(String node, String parent) {
+		BasicDBObject query = new BasicDBObject();
+		query.put("node", node);
+		query.put("parent", parent);
+		return query;
+	}
+	
+	public boolean isBusy(String node, String parent, List<String> ancestor) throws JSONException, UnknownHostException {
+		BasicDBObject query = query(node, parent, ancestor);
+		String temp = getNode(query);
+		JSONObject myNode = new JSONObject(temp);
+		if(myNode.get("busy").equals("False")) {
+			return false;
+		}else {
+			return true;
+		}
+		
+	}
+	
+	private boolean isBusy(String node, String parent) throws UnknownHostException, JSONException {
+		BasicDBObject query = query(node, parent);
+		String temp = getNode(query);
+		JSONObject myNode = new JSONObject(temp);
+		if(myNode.get("busy").equals("False")) {
+			return false;
+		}else {
+			return true;
+		}
+	}
+	
+	public void setBusy(String node, String parent, List<String> ancestor) throws UnknownHostException, JSONException {
+		BasicDBObject query = query(node, parent, ancestor);
 		BasicDBObject busy = new BasicDBObject();
 		busy.put("busy", "True");
 		BasicDBObject setQuery = new BasicDBObject();
 		setQuery.append("$set", busy);
-		String temp = getNode(query);
-		JSONObject myNode = new JSONObject(temp);
-		System.out.println(myNode.get("busy"));
-		if(myNode.get("busy").equals("False")) {
-			collection().updateOne(query, setQuery);
+		if(isBusy(node, parent, ancestor) == false) {
+			setNode(query, setQuery);
+			System.out.println("Set busy to true");
+		}else {
+			System.out.println("Already True");
 		}
-		System.out.println("**************************************************");
-		System.out.println(getNode(query));
-		System.out.println("**************************************************");
 	}
+	
+	public void setBusy(String node, String parent) throws UnknownHostException, JSONException {
+		BasicDBObject query = query(node, parent);
+		BasicDBObject busy = new BasicDBObject();
+		busy.put("busy", "True");
+		BasicDBObject setQuery = new BasicDBObject();
+		setQuery.append("$set", busy);
+		if(isBusy(node, parent) == false) {
+			setNode(query, setQuery);
+			System.out.println("Set busy to true");
+		}else {
+			System.out.println("Already True");
+		}
+	}
+	
+	public void unsetBusy(String node, String parent, List<String> ancestor) throws UnknownHostException, JSONException {
+		BasicDBObject query = query(node, parent, ancestor);
+		BasicDBObject busy = new BasicDBObject();
+		busy.put("busy", "False");
+		BasicDBObject setQuery = new BasicDBObject();
+		setQuery.append("$set", busy);
+		if(isBusy(node, parent, ancestor) == true) {
+			setNode(query, setQuery);
+			System.out.println("Set busy to false");
+		}else {
+			System.out.println("Already False");
+		}
+	}
+	
+	
+	
+	
+	
+	
 
 }
