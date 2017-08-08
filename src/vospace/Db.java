@@ -36,11 +36,16 @@ public class Db {
 	return "NodeNotFound";
 	}
 	
-	public void setNode(BasicDBObject query, BasicDBObject setQuery) {
+	public void setNode(BasicDBObject query, BasicDBObject setQuery, String qty) {
 		MongoClient m = new MongoClient();
 		MongoDatabase database = m.getDatabase("vospace");
 		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
-		collection.updateOne(query, setQuery);
+		if(qty.equals("one")){
+			collection.updateOne(query, setQuery);
+		}
+		else if(qty.equals("many")){
+			collection.updateMany(query, setQuery);
+		}
 		m.close();
 	}
 	
@@ -52,10 +57,16 @@ public class Db {
 		return query;
 	}
 	
-	private BasicDBObject query(String node, String parent) {
+	private BasicDBObject query(String parent, List<String> ancestor) {
 		BasicDBObject query = new BasicDBObject();
-		query.put("node", node);
 		query.put("parent", parent);
+		query.put("ancestor", ancestor);
+		return query;
+	}
+	
+	private BasicDBObject query(String ancestor) {
+		BasicDBObject query = new BasicDBObject();
+		query.put("ancestor", ancestor);
 		return query;
 	}
 	
@@ -71,8 +82,19 @@ public class Db {
 		
 	}
 	
-	private boolean isBusy(String node, String parent) throws UnknownHostException, JSONException {
-		BasicDBObject query = query(node, parent);
+	private boolean isBusy(String parent, List<String> ancestor) throws UnknownHostException, JSONException {
+		BasicDBObject query = query(parent, ancestor);
+		String temp = getNode(query);
+		JSONObject myNode = new JSONObject(temp);
+		if(myNode.get("busy").equals("False")) {
+			return false;
+		}else {
+			return true;
+		}
+	}
+	
+	private boolean isBusy(String ancestor) throws UnknownHostException, JSONException {
+		BasicDBObject query = query(ancestor);
 		String temp = getNode(query);
 		JSONObject myNode = new JSONObject(temp);
 		if(myNode.get("busy").equals("False")) {
@@ -89,24 +111,33 @@ public class Db {
 		BasicDBObject setQuery = new BasicDBObject();
 		setQuery.append("$set", busy);
 		if(isBusy(node, parent, ancestor) == false) {
-			setNode(query, setQuery);
-			System.out.println("Set busy to true");
+			setNode(query, setQuery, "one");
 		}else {
-			System.out.println("Already True");
 		}
 	}
 	
-	public void setBusy(String node, String parent) throws UnknownHostException, JSONException {
-		BasicDBObject query = query(node, parent);
+	public void setBusy(String parent, List<String> ancestor) throws UnknownHostException, JSONException {
+		BasicDBObject query = query(parent, ancestor);
 		BasicDBObject busy = new BasicDBObject();
 		busy.put("busy", "True");
 		BasicDBObject setQuery = new BasicDBObject();
 		setQuery.append("$set", busy);
-		if(isBusy(node, parent) == false) {
-			setNode(query, setQuery);
+		if(isBusy(parent, ancestor) == false) {
+			setNode(query, setQuery, "many");
 			System.out.println("Set busy to true");
 		}else {
-			System.out.println("Already True");
+		}
+	}
+	
+	public void setBusy(String ancestor) throws UnknownHostException, JSONException {
+		BasicDBObject query = query(ancestor);
+		BasicDBObject busy = new BasicDBObject();
+		busy.put("busy", "True");
+		BasicDBObject setQuery = new BasicDBObject();
+		setQuery.append("$set", busy);
+		if(isBusy(ancestor) == false) {
+			setNode(query, setQuery, "many");
+		}else {
 		}
 	}
 	
@@ -117,8 +148,20 @@ public class Db {
 		BasicDBObject setQuery = new BasicDBObject();
 		setQuery.append("$set", busy);
 		if(isBusy(node, parent, ancestor) == true) {
-			setNode(query, setQuery);
-			System.out.println("Set busy to false");
+			setNode(query, setQuery, "one");
+		}else {
+			System.out.println("Already False");
+		}
+	}
+	
+	public void unsetBusy(String parent, List<String> ancestor) throws UnknownHostException, JSONException {
+		BasicDBObject query = query(parent, ancestor);
+		BasicDBObject busy = new BasicDBObject();
+		busy.put("busy", "False");
+		BasicDBObject setQuery = new BasicDBObject();
+		setQuery.append("$set", busy);
+		if(isBusy(parent, ancestor) == true) {
+			setNode(query, setQuery, "one");
 		}else {
 			System.out.println("Already False");
 		}

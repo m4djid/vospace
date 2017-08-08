@@ -72,6 +72,7 @@ public class VoCore {
 		}
 		else {
 			db.setBusy(originFile, originParent, originAncestor);
+			
 			Path path_origin = Paths.get(racine+getPathToString(origin)[1]);
 			System.out.println("origine : "+ path_origin);
 			Path path_direction = Paths.get(racine+getPathToString(this.direction)[1]);
@@ -79,14 +80,13 @@ public class VoCore {
 			try {
 				Files.move(path_origin, path_direction, ATOMIC_MOVE);
 				BasicDBObject query = db.query(originFile, originParent, originAncestor);
-				BasicDBObject updateMtime = new BasicDBObject("$set",
-					    new BasicDBObject("properties.mtime.mtime", "Modified "+LocalDateTime.now()));
+//				BasicDBObject updateMtime = new BasicDBObject("$set",
+//					    new BasicDBObject("properties.mtime.mtime", "Modified "+LocalDateTime.now()));
 				BasicDBObject updateNode = new BasicDBObject("$set", new BasicDBObject("node", directionFile)
 					    .append("parent", directionParent)
 					    .append("ancestor", directionAncestor).append("path", "nodes"+getPathToString(this.direction)[1]));
-			
-				db.setNode(query, updateMtime);
-				db.setNode(query, updateNode);
+				
+				db.setNode(query, updateNode,"one");
 				String test = db.getNode(db.query(directionFile, directionParent, directionAncestor));
 				if (!test.equals("")){
 					db.unsetBusy(directionFile, directionParent, directionAncestor);
