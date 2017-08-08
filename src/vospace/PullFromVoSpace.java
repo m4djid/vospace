@@ -1,8 +1,24 @@
 package vospace;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.io.IOException;
+import java.io.StringReader;
 import java.net.UnknownHostException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.json.JSONException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 
 import uws.UWSException;
 import uws.job.JobThread;
@@ -17,11 +33,45 @@ public class PullFromVoSpace extends JobThread {
 	@Override
 	protected void jobWork() throws UWSException, InterruptedException {
 		VoCore vo = new VoCore();
+		Document doc = null;
+		String target = null, direction = null, protocol, view;
+		boolean keepBytes = false;
 		System.out.println("**************************************************");
 		System.out.println("******** Execution du job "+job.getJobId()+" *********");
 		System.out.println("**************************************************");
+
+		DocumentBuilder docbuilder;
 		try {
-			vo.moveNode("vos://example.com!vospace/iyapici/CDS/11972df2", "vos://example.com!vospace/iyapici/CDS/qwerty/.auto");
+			docbuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			InputSource is = new InputSource();
+			is.setCharacterStream(new StringReader(job.getJobInfo().getXML("String")));
+			doc = docbuilder.parse(is);
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Node n = doc.getFirstChild();
+		NodeList nl = n.getChildNodes();
+		
+		for(int i=0; i<nl.getLength();i++) {
+			Node t = nl.item(i);
+			if(t.getNodeName().equals("vos:target")) {
+				target = t.getTextContent();
+			}
+			if (t.getNodeName().equals("vos:direction")) {
+				direction = t.getTextContent();
+			}
+			if (t.getNodeName().equals("vos:keepBytes")) {
+				 if(t.getTextContent().equals("True") | t.getTextContent().equals("true")){
+					 keepBytes = true;
+				 };
+			}
+		}
+		
+	
+		
+		try {
+			vo.moveNode(target, direction, keepBytes);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -29,9 +79,9 @@ public class PullFromVoSpace extends JobThread {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("**************************************************");
-		System.out.println("********* job "+job.getJobId()+" "+job.getPhase() +" ***********");
-		System.out.println("**************************************************");
+	
+		
+		
 //		String xml = job.getJobInfo().getXML("target");
 //		int executionTime = 5;
 //		int count = 1;

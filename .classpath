@@ -22,10 +22,7 @@
 			<attribute name="org.eclipse.jst.component.dependency" value="/WEB-INF/lib"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/Madjid/Downloads/taplib-master/uws_4.2.jar">
-		<attributes>
-			<attribute name="org.eclipse.jst.component.nondependency" value=""/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="uws_4.2.jar"/>
+	<classpathentry kind="lib" path="/home/bouchair/git/taplib/javax.servlet-api-3.0.1.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

@@ -30,5 +30,11 @@
         <artifactId>mongodb-driver</artifactId>
         <version>3.4.0-beta1</version>
     </dependency>
+    <dependency>
+    	<groupId>org.json</groupId>
+    	<artifactId>json</artifactId>
+    	<version>20160810</version>
+</dependency>
   </dependencies>
+  
 </project>
