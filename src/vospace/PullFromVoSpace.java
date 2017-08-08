@@ -32,9 +32,10 @@ public class PullFromVoSpace extends JobThread {
 
 	@Override
 	protected void jobWork() throws UWSException, InterruptedException {
-		VoCore vo = new VoCore();
+		
 		Document doc = null;
 		String target = null, direction = null, protocol, view;
+		String jobType = null;
 		boolean keepBytes = false;
 		System.out.println("**************************************************");
 		System.out.println("******** Execution du job "+job.getJobId()+" *********");
@@ -62,16 +63,18 @@ public class PullFromVoSpace extends JobThread {
 				direction = t.getTextContent();
 			}
 			if (t.getNodeName().equals("vos:keepBytes")) {
+				jobType = "movecopy";
 				 if(t.getTextContent().equals("True") | t.getTextContent().equals("true")){
 					 keepBytes = true;
 				 };
 			}
 		}
 		
-	
 		
+		if (jobType.equals("movecopy")){
 		try {
-			vo.moveNode(target, direction, keepBytes);
+			MoveCopy mc = new MoveCopy();
+			mc.moveNode(target, direction, keepBytes);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -79,7 +82,7 @@ public class PullFromVoSpace extends JobThread {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	
+		}
 		
 		
 //		String xml = job.getJobInfo().getXML("target");
