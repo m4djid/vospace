@@ -72,13 +72,16 @@ public class PullFromVoSpace extends JobThread {
 		
 		
 		if (jobType.equals("movecopy")){
-		try {
 			MoveCopy mc = new MoveCopy();
+		try {
 			mc.moveNode(target, direction, keepBytes);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

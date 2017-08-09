@@ -17,6 +17,7 @@ import org.json.*;
 
 public class Db {
 	
+	//Get node's representation
 	public String getNode(BasicDBObject query) throws UnknownHostException {
 		Document myDoc;
 		MongoClient m = new MongoClient();
@@ -24,15 +25,12 @@ public class Db {
 			MongoDatabase database = m.getDatabase("vospace");
 			MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
 			myDoc = collection.find(query).first();
-	//		myDoc.remove("_id");
 			m.close();
-	//		System.out.println(myDoc);
 			if (myDoc!=null) {
 				myDoc.remove("_id");
 				return myDoc.toJson();
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			m.close();
 		} 
@@ -51,18 +49,19 @@ public class Db {
 				for(Document doc : myDoc) {
 					doc.remove("_id");
 				    retourDoc.add(doc.toJson());
+				    System.out.println("Mongo got " +doc.toJson());
 				}
 			}
 			m.close();
 			return retourDoc;
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			m.close();
 		}
 		return retourDoc; 
 	}
 	
+	//Set node's representation
 	public void setNode(BasicDBObject query, BasicDBObject setQuery, String qty) {
 		MongoClient m = new MongoClient();
 		MongoDatabase database = m.getDatabase("vospace");
@@ -76,6 +75,7 @@ public class Db {
 		m.close();
 	}
 	
+	//Generate BSON Object
 	public BasicDBObject query(String node, String parent, List<String> ancestor) {
 		BasicDBObject query = new BasicDBObject();
 		query.put("node", node);
@@ -104,6 +104,30 @@ public class Db {
 		return query;
 	}
 	
+	//Insert in database
+	public void insert(List<JSONObject> documents) {
+		MongoClient m = new MongoClient();
+		MongoDatabase database = m.getDatabase("vospace");
+		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
+		for (JSONObject json : documents) {
+			Document doc = Document.parse(json.toString());
+			collection.insertOne(doc);
+		}
+		m.close();
+	}
+	
+	//Delete from database
+	public void delete(String key, String value) {
+		BasicDBObject query = query(key, value);
+		MongoClient m = new MongoClient();
+		MongoDatabase database = m.getDatabase("vospace");
+		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
+		collection.deleteMany(query);
+		m.close();
+	}
+	
+	
+	//Check if the node's "busy" flag is true
 //	public boolean isBusy(String node, String parent, List<String> ancestor) throws JSONException, UnknownHostException {
 //		BasicDBObject query = query(node, parent, ancestor);
 //		String temp = getNode(query);
@@ -146,6 +170,7 @@ public class Db {
 //		
 //	}
 	
+	//Set node "busy" flag to true
 //	public void setBusy(String node, String parent, List<String> ancestor) throws UnknownHostException, JSONException {
 //		BasicDBObject query = query(node, parent, ancestor);
 //		BasicDBObject busy = new BasicDBObject();
@@ -181,7 +206,8 @@ public class Db {
 //		}else {
 //		}
 //	}
-//	
+	
+	//Set node's "busy" flag to false
 //	public void unsetBusy(String node, String parent, List<String> ancestor) throws UnknownHostException, JSONException {
 //		BasicDBObject query = query(node, parent, ancestor);
 //		BasicDBObject busy = new BasicDBObject();

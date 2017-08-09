@@ -12,13 +12,14 @@ public class VoCore {
 
 	String racine = "/home/bouchair/PycharmProjects/VOSpace/nodes";
 	
-
+	//Generate a name for the node when the value is ".auto"
 	String auto() {
 		String suuid = UUID.randomUUID().toString();
 		String[] ruuid = suuid.split("-");
 		return ruuid[0];
 	}
 	
+	//Parse the uri in a Map
 	Map<String, List<String>> parsePath(String uri) {
 		String[] uri_parts = getPathToString(uri, "!vospace");
 		int count = Paths.get(uri_parts[1]).getNameCount();
@@ -26,14 +27,20 @@ public class VoCore {
 		path.put("node", new ArrayList<>());
 		path.get("node").add(Paths.get(uri_parts[1]).getFileName().toString());
 		path.put("parent", new ArrayList<>());
-		path.get("parent").add(Paths.get(uri_parts[1]).getName(count-2).toString());
 		path.put("ancestor", new ArrayList<>());
-		for (int i = 0; i < count-2; i++) {
-			path.get("ancestor").add(Paths.get(uri_parts[1]).getName(i).toString());
+		if(count>1) {
+			path.get("parent").add(Paths.get(uri_parts[1]).getName(count-2).toString());
+			for (int i = 0; i < count-2; i++) {
+				path.get("ancestor").add(Paths.get(uri_parts[1]).getName(i).toString());
+			}
+		}
+		else {
+			path.get("parent").add("");
 		}
 		return path;
 	}
 	
+	//Split the string
 	String[] getPathToString(String uri, String cut) {
 		return uri.split(cut);
 	}

@@ -24,7 +24,7 @@ public class AsyncServlet extends UWSServlet {
 
 	@Override
 	public void initUWS() throws UWSException{
-		addJobList(new JobList("transfer"));
+		addJobList(new JobList("transfers"));
 		System.out.println("**************************************************");
 		System.out.println("************ Lancement du service UWS ************");
 		System.out.println("**************************************************");
@@ -32,10 +32,10 @@ public class AsyncServlet extends UWSServlet {
 
 	@Override
 	public JobThread createJobThread(UWSJob job) throws UWSException{
-		if (job.getJobList().getName().equals("transfer"))
+		if (job.getJobList().getName().equals("transfers")) 
 			return new PullFromVoSpace(job);
 		
-		else
+		else 
 			throw new UWSException("Impossible to create a job inside the jobs list \"" + job.getJobList().getName() + "\" !");
 	}
 	
