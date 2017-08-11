@@ -1,23 +1,10 @@
 package vospace;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import uws.UWSException;
 import uws.job.JobList;
 import uws.job.JobThread;
 import uws.job.UWSJob;
-import uws.job.user.JobOwner;
 import uws.service.UWSServlet;
-import uws.service.UWSUrl;
-import uws.service.file.UWSFileManager;
-import uws.service.request.NoEncodingParser;
-import uws.service.request.RequestParser;
-import uws.service.request.XMLRequestParser;
 
 public class AsyncServlet extends UWSServlet {
 	private static final long serialVersionUID = 1L;
@@ -33,13 +20,12 @@ public class AsyncServlet extends UWSServlet {
 	@Override
 	public JobThread createJobThread(UWSJob job) throws UWSException{
 		if (job.getJobList().getName().equals("transfers")) 
-			return new PullFromVoSpace(job);
+			return new VoSpaceJob(job);
 		
 		else 
 			throw new UWSException("Impossible to create a job inside the jobs list \"" + job.getJobList().getName() + "\" !");
 	}
-	
-
+}
 	
 //	@Override
 //	protected void writeHomePage(UWSUrl requestUrl, HttpServletRequest req, HttpServletResponse resp, JobOwner user) throws UWSException, ServletException, IOException{
@@ -58,4 +44,4 @@ public class AsyncServlet extends UWSServlet {
 //	}
 
 
-}
+

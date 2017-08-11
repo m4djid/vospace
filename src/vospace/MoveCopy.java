@@ -1,60 +1,119 @@
 package vospace;
 
-import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
-
+import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.mongodb.BasicDBObject;
 
-public class MoveCopy {
-	
-	private String origin, direction;
-	VoCore vo = new VoCore();
+public class MoveCopy extends VoCore {
+
 	
 	public void moveNode(String origin, String direction, boolean keepBytes) throws JSONException, InterruptedException, IOException {
-		Db db = new Db();
-		
+		System.out.println("etape 1");
 		//Uri parsing into variables
-		Map<String, List<String>> origin_ = vo.parsePath(origin);
-		Map<String, List<String>> direction_ = vo.parsePath(direction);
+		Map<String, List<String>> origin_ = parsePath(origin);
+		Map<String, List<String>> direction_ = parsePath(direction);
 
 		String originFile = origin_.get("node").get(0);
 		String directionFile = direction_.get("node").get(0);
-		if (directionFile.equals(".auto")) {
-			directionFile = vo.auto();
-			this.direction= direction.replaceAll(".auto", directionFile);
-		}
 		String originParent = origin_.get("parent").get(0);
 		String directionParent = direction_.get("parent").get(0);
 		List<String> originAncestor = origin_.get("ancestor");
 		List<String> directionAncestor = direction_.get("ancestor");
 		
+		System.out.println("etape 1#");
 		//Paths creation
-		Path path_origin = Paths.get(vo.racine+vo.getPathToString(origin, "!vospace")[1]);
-		if(!db.getNode(db.query(directionFile, directionParent,directionAncestor)).equals("NodeNotFound")) {
-			directionAncestor.add(directionParent);
-			directionParent = directionFile;
-			Path path_direction = Paths.get(vo.racine+vo.getPathToString(this.direction, "!vospace")[1]+"/"+directionFile);
+		
+		String path_origin = racine+origin_.get("path").get(0);
+		String path_direction = null;
+		try {
+			if(getNode(query(directionFile, directionParent,directionAncestor)) != null) {
+				System.out.println("Node exists");
+				directionAncestor.add(directionParent);
+				directionParent = directionFile;
+				path_direction = racine+direction_.get("path").get(0)+"/"+directionFile;
+				System.out.println("Nouveau path " +racine+direction_.get("path").get(0)+"/"+directionFile);
+			}
+			else {
+				System.out.println("Cible cleared");
+				path_direction = racine+direction_.get("path").get(0);
+			}
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
-		Path path_direction = Paths.get(vo.racine+vo.getPathToString(this.direction, "!vospace")[1]);
 		
-		
+		System.out.println("etape 2 copie physique");
 		//Physical copy
-		Files.copy(path_origin, path_direction);
+		File file = new File(path_origin);
+		File file2 = new File(path_direction);
 		
+		if(file != null && file2 != null) {
+			boolean isDirectory = file.isDirectory(); 
+			boolean isFile =      file.isFile();
+			if(file.isFile()==true) {
+				try {
+					FileUtils.copyFileToDirectory(file, file2);
+					System.out.println("Copie fichier " +file.isFile());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			else if (file.isDirectory()==true) {
+			    try {
+					FileUtils.copyDirectory(file, file2);
+					System.out.println("Copie dossier " +file.isDirectory());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		System.out.println("etape 3 database");
+		try {
+			updateDB(origin, originFile, originParent, originAncestor, directionFile, directionParent, directionAncestor, direction_.get("path").get(0));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		//If the method is a move
+		if(keepBytes==false) {
+			System.out.println("Suppréssion de l'origine");
+			//Delete the node and his subnodes from the database
+			try {
+				delete("node", originFile);
+				delete("parent", originFile);
+				delete("ancestor", originFile);
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			//Delete the node on the physical disk
+			try {
+				FileUtils.forceDelete(file);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	private void updateDB(String origin, String originFile, String originParent, List<String>originAncestor, String directionFile, String directionParent, List<String>directionAncestor, String path) throws UnknownHostException {
 		//Copy and edit the target node representation
-		BasicDBObject node = db.query(originFile, originParent, originAncestor);					
-		String targetNode = db.getNode(node);
+		BasicDBObject node = query(originFile, originParent, originAncestor);					
+		String targetNode = getNode(node);
 		JSONObject js = new JSONObject(targetNode);
 		js.remove("node");
 		js.remove("parent");
@@ -62,11 +121,10 @@ public class MoveCopy {
 		js.remove("ancestor");
 		js.put("node", directionFile);
 		js.put("parent", directionParent);
-		js.put("path", "nodes"+vo.getPathToString(this.direction, "!vospace")[1]);
+		js.put("path", "nodes"+path);
 		js.put("ancestor", directionAncestor);
 
 		List<JSONObject> insertions = new ArrayList<JSONObject>();
-		
 		insertions.add(js);
 
 		//Copy and edit children's representations
@@ -76,56 +134,43 @@ public class MoveCopy {
 		List<String> newAncestor = directionAncestor;
 		newAncestor.add(directionParent);
 		newAncestor.add(directionFile);
-		List<String> branches = db.getNode(query, "s");
+		List<String> branches = getNode(query, "s");
 		for (String string : branches) {
 			JSONObject json = new JSONObject(string);
 			String fPath;
-			String temp = vo.getPathToString(origin, "!vospace")[1];
-			fPath = vo.getPathToString(json.getString("path"), temp)[1];
+			String temp = getPathToString(origin, "!vospace")[1];
+			fPath = getPathToString(json.getString("path"), temp)[1];
 			json.remove("parent");
 			json.remove("ancestor");
 			json.remove("path");
 			json.put("parent", directionFile);
 			json.put("ancestor", directionAncestor);
-			json.put("path", "nodes"+vo.getPathToString(this.direction, "!vospace")[1]+fPath);
+			json.put("path", "nodes"+path+fPath);
 
 			insertions.add(json);
 		}
 		
 		//Rank n
-		BasicDBObject subquery = db.query(originFile);
-		List<String> subBranches = db.getNode(subquery, "s");
+		BasicDBObject subquery = query(originFile);
+		List<String> subBranches = getNode(subquery, "s");
 		for (String s : subBranches) {
 			JSONObject json = new JSONObject(s);
 			String fPath;
-			String temp = vo.getPathToString(origin, "!vospace")[1];
-			fPath = vo.getPathToString(json.getString("path"), temp)[1];
-			Map<String, List<String>> _temp = vo.parsePath(vo.getPathToString(this.direction, "!vospace")[1]+fPath);
+			String temp = getPathToString(origin, "!vospace")[1];
+			fPath = getPathToString(json.getString("path"), temp)[1];
+			Map<String, List<String>> _temp = parsePath(path+fPath);
 			json.remove("ancestor");
 			json.remove("path");
 			json.put("ancestor", _temp.get("ancestor"));
-			json.put("path", "nodes"+vo.getPathToString(this.direction, "!vospace")[1]+fPath);
+			json.put("path", "nodes"+path+fPath);
 
 			insertions.add(json);
 		}
 		
+		System.out.println("etape 3* insertion database");
 		//Insert the new representation in database
-		db.insert(insertions);
-		
-		//If the method is a move
-		if(keepBytes=false) {
-			
-			//Delete the node and his subnodes from the database
-			db.delete("node", originFile);
-			db.delete("parent", originFile);
-			db.delete("ancestor", originFile);
-			
-			//Delete the node on the physical disk
-			Files.delete(path_origin);
-		}
-						
-
-		
-
+		System.out.println("Insertion");
+		insert(insertions);
+		System.out.println("Succès");
 	}
 }

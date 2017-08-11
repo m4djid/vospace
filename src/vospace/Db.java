@@ -34,7 +34,7 @@ public class Db {
 			e.printStackTrace();
 			m.close();
 		} 
-		return "NodeNotFound";
+		return null;
 	}
 	
 	public List<String> getNode(BasicDBObject query, String s) throws UnknownHostException {
@@ -49,7 +49,6 @@ public class Db {
 				for(Document doc : myDoc) {
 					doc.remove("_id");
 				    retourDoc.add(doc.toJson());
-				    System.out.println("Mongo got " +doc.toJson());
 				}
 			}
 			m.close();
@@ -61,19 +60,19 @@ public class Db {
 		return retourDoc; 
 	}
 	
-	//Set node's representation
-	public void setNode(BasicDBObject query, BasicDBObject setQuery, String qty) {
-		MongoClient m = new MongoClient();
-		MongoDatabase database = m.getDatabase("vospace");
-		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
-		if(qty.equals("one")){
-			collection.updateOne(query, setQuery);
-		}
-		else if(qty.equals("many")){
-			collection.updateMany(query, setQuery);
-		}
-		m.close();
-	}
+//	//Set node's representation
+//	public void setNode(BasicDBObject query, BasicDBObject setQuery, String qty) {
+//		MongoClient m = new MongoClient();
+//		MongoDatabase database = m.getDatabase("vospace");
+//		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
+//		if(qty.equals("one")){
+//			collection.updateOne(query, setQuery);
+//		}
+//		else if(qty.equals("many")){
+//			collection.updateMany(query, setQuery);
+//		}
+//		m.close();
+//	}
 	
 	//Generate BSON Object
 	public BasicDBObject query(String node, String parent, List<String> ancestor) {
@@ -107,22 +106,35 @@ public class Db {
 	//Insert in database
 	public void insert(List<JSONObject> documents) {
 		MongoClient m = new MongoClient();
-		MongoDatabase database = m.getDatabase("vospace");
-		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
-		for (JSONObject json : documents) {
-			Document doc = Document.parse(json.toString());
-			collection.insertOne(doc);
+		try {
+			MongoDatabase database = m.getDatabase("vospace");
+			MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
+			for (JSONObject json : documents) {
+				Document doc = Document.parse(json.toString());
+				collection.insertOne(doc);
+				BasicDBObject query = new BasicDBObject();
+				query.put("node", json.get("node"));
+			}
+			m.close();
+		} catch (JSONException e) {
+			m.close();
+			e.printStackTrace();
 		}
-		m.close();
 	}
 	
 	//Delete from database
 	public void delete(String key, String value) {
-		BasicDBObject query = query(key, value);
+		Document query = new Document(key, value);
 		MongoClient m = new MongoClient();
-		MongoDatabase database = m.getDatabase("vospace");
-		MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
-		collection.deleteMany(query);
+		try {
+			MongoDatabase database = m.getDatabase("vospace");
+			MongoCollection<Document> collection = database.getCollection("VOSpaceFiles");
+			collection.deleteMany(query);
+			System.out.println("deleted "+key+" "+value);
+		} catch (Exception e) {
+			m.close();
+			e.printStackTrace();
+		}
 		m.close();
 	}
 	
