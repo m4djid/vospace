@@ -25,7 +25,6 @@ public class VoCore extends Db{
 	
 	//Parse the uri in a Map
 	Map<String, List<String>> parsePath(String uri) {
-		System.out.println("etape 1* for : "+uri);
 		String[] uri_parts = getPathToString(uri, "!vospace");
 		String uriPath = uri_parts[1];
 		int count = Paths.get(uriPath).getNameCount();
@@ -49,7 +48,6 @@ public class VoCore extends Db{
 		else {
 			path.get("parent").add("");
 		}
-		System.out.println("etape 1** " + path);
 		return path;
 	}
 	
