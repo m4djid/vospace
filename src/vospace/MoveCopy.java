@@ -67,8 +67,9 @@ public class MoveCopy extends JobThread {
 
 		long endTime   = System.currentTimeMillis();
 		long totalTime = endTime - startTime;
-		System.out.println("Job : "+job.getJobId()+" terminé en "+totalTime);
-		
+		System.out.println("*************************************************");
+		System.out.println("******** Job : "+job.getJobId()+" terminé en "+totalTime+ "ms ********");
+		System.out.println("*************************************************");
 		
 		
 		if (isInterrupted())
