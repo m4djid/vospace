@@ -1,15 +1,13 @@
 package vospace;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.json.JSONException;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -39,6 +37,7 @@ public class AsyncServlet extends UWSServlet {
 	public JobThread createJobThread(UWSJob job) throws UWSException{
 		Document doc = null;
 		String target = null, direction = null, protocol = null, view = null, securityMethod = null;
+		ArrayList<String> param = new ArrayList<String>();
 		String jobType = null;
 		boolean keepBytes = false;
 		String XML = job.getJobInfo().getXML("String");
@@ -68,6 +67,9 @@ public class AsyncServlet extends UWSServlet {
 					if (direction.equals("pullFromVoSpace")){
 						jobType = "pull";
 					}
+					else if (direction.equals("pushToVoSpace")) {
+						jobType = "push";
+					}
 				}
 				else if (t.getNodeName().equals("vos:keepBytes")) {
 					jobType = "movecopy";
@@ -93,9 +95,12 @@ public class AsyncServlet extends UWSServlet {
 		if (jobType.equals("pull")){
 			return new PullFromVoSpace(job, target, protocol, securityMethod, view);
 		}
-		
+		if (jobType.equals("push")) {
+			return new PushToVoSpace(job, target, protocol, securityMethod, view);
+		}
 		else 
 			throw new UWSException("Impossible to create a job inside the jobs list \"" + job.getJobList().getName() + "\" !");
+		
 	}
 	
 }

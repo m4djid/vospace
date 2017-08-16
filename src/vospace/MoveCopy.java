@@ -1,22 +1,10 @@
 package vospace;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.json.JSONException;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
 import uws.UWSException;
 import uws.job.ErrorType;
 import uws.job.JobThread;
@@ -37,12 +25,12 @@ public class MoveCopy extends JobThread {
 
 	@Override
 	protected void jobWork() throws UWSException, InterruptedException {
-		System.out.println("Job work");
 		long startTime = System.currentTimeMillis();
 
 				
 		System.out.println("**************************************************");
 		System.out.println("******** Execution du job "+job.getJobId()+" *********");
+		System.out.println("Type : Move / Copy");
 		System.out.println("Début : " +LocalDateTime.now());
 		System.out.println("target : "+this.target);
 		System.out.println("destination : "+this.direction);
