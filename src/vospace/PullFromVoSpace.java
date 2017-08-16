@@ -34,7 +34,10 @@ public class PullFromVoSpace extends JobThread {
 		this.target = target;
 		this.protocol = protocol;
 		this.securityMethod = securityMethod;
-		this.view = view;
+		if (view == null)
+			this.view = "_";
+		else
+			this.view = view;
 	}
 	
 	private void getFiles(File dir) {
@@ -104,21 +107,19 @@ public class PullFromVoSpace extends JobThread {
 		try {
 			temp = vo.getNode(vo.query(nodeFile, nodeParent,nodeAncestor));
 			if (temp!=null) {
-				System.out.println("Node exists");
 				System.out.println(temp);
 			}
 			else {
-				System.out.println("Node Not Found");
+				throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, "Node Not Found : "+nodeFile, ErrorType.TRANSIENT);
 			}
 
 		} catch (Exception e1) {
-			throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, e1, "Error on node : "+nodeFile+" !", ErrorType.TRANSIENT);
+			throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, e1, ErrorType.TRANSIENT);
 		}
 
 		JSONObject json = new JSONObject(temp);
 		String path = json.getString("path").toString();
 		XmlResponse xml = new XmlResponse();
-		System.out.println(storage+"/"+path);
 		
 		// Create result directory
 		
@@ -142,13 +143,12 @@ public class PullFromVoSpace extends JobThread {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			retour = xml.responseXML(target, "pullFromVoSpace", protocol, redirect, view);
 		}
 		else {
-			redirect = "http://130.79.128.185/vospace/storage/"+path;
-			retour = xml.responseXML(target, "pullFromVoSpace", protocol, redirect, "_");
+			redirect = "http://130.79.128.185/storage/"+path;
 		}
-		
+
+		retour = xml.responseXML(target, "pullFromVoSpace", protocol, redirect, view);
 		try {   
 	        // Write the result:
 	        BufferedWriter writer = new BufferedWriter(new FileWriter(f));

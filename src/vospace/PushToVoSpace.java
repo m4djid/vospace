@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,10 @@ public class PushToVoSpace extends JobThread {
 		this.target = target;
 		this.protocol = protocol;
 		this.securityMethod = securityMethod;
-		this.view = view;
+		if (view == null)
+			this.view = "_";
+		else
+			this.view = view;
 	}
 
 	@Override
@@ -52,27 +56,28 @@ public class PushToVoSpace extends JobThread {
 		String nodeParent = node.get("parent").get(0);
 		List<String> nodeAncestor = node.get("ancestor");
 		String temp = null;
-		
+		JSONObject json;
 		// Check if the file already exists in database
 		try {
 			temp = vo.getNode(vo.query(nodeFile, nodeParent,nodeAncestor));
 			if (temp!=null) {
-				System.out.println("Node exists");
-				System.out.println(temp);
+				json = new JSONObject(temp);
+				if (json.getJSONObject("properties").getJSONObject("type").getString("type").equals("DataNode")) 
+					throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, "Internal Fault : "+nodeFile+" is not a ContainderNode", ErrorType.TRANSIENT);
+				
 			}
 			else {
 				System.out.println("Node Not Found");
-				throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, "Node Not Found : "+nodeFile+" !", ErrorType.TRANSIENT);
+				throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, "Node Not Found : "+nodeFile, ErrorType.TRANSIENT);
 			}
 
-		} catch (Exception e1) {
-			throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, e1, "Error on node : "+nodeFile+" !", ErrorType.TRANSIENT);
+		} catch (UWSException | UnknownHostException e1) {
+			throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, e1, ErrorType.TRANSIENT);
 		}
 		
-		JSONObject json = new JSONObject(temp);
+	
 		String path = json.getString("path").toString();
 		XmlResponse xml = new XmlResponse();
-		System.out.println(storage+"/"+path);
 		
 		File file = new File(storage+"/"+path);
 		if (file.isFile()) {
@@ -94,8 +99,8 @@ public class PushToVoSpace extends JobThread {
 	    
         // If the node is requested with a zip view, the node and his subnodes are compressed and stored in a job folder to be retrieved
 		
-		redirect = "http://130.79.128.185/vospace/storage/"+path;
-		retour = xml.responseXML(target, "pushToVoSpace", protocol, redirect, "_");
+		redirect = "http://130.79.128.185/vospace/upload/"+path;
+		retour = xml.responseXML(target, "pushToVoSpace", protocol, redirect, view);
 		
 		try {   
 	        // Write the result:

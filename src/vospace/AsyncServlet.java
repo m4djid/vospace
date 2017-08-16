@@ -66,9 +66,11 @@ public class AsyncServlet extends UWSServlet {
 					direction = t.getTextContent();
 					if (direction.equals("pullFromVoSpace")){
 						jobType = "pull";
+						System.out.println(jobType);
 					}
 					else if (direction.equals("pushToVoSpace")) {
 						jobType = "push";
+						System.out.println(jobType);
 					}
 				}
 				else if (t.getNodeName().equals("vos:keepBytes")) {
@@ -78,10 +80,16 @@ public class AsyncServlet extends UWSServlet {
 					 };
 				}
 				else if (t.getNodeName().equals("vos:protocol")) {
-					protocol = t.getAttributes().getNamedItem("uri").getNodeValue();
+					if (t.getAttributes().getNamedItem("uri").getNodeValue() != null)
+						protocol = t.getAttributes().getNamedItem("uri").getNodeValue();
+					else
+						protocol = null;
 				}
 				else if (t.getNodeName().equals("vos:view")) {
-					view = t.getAttributes().getNamedItem("uri").getNodeValue();
+					if (t.getAttributes().getNamedItem("uri").getNodeValue() != null)
+						view = t.getAttributes().getNamedItem("uri").getNodeValue();
+					else
+						protocol = null;
 				}	
 			}
 		} catch (DOMException e1) {

@@ -37,8 +37,10 @@ public class MC extends VoCore {
 		String path_direction = null;
 		try {
 			if(getNode(query(directionFile, directionParent,directionAncestor)) != null) {
-				directionAncestor.add(directionParent);
-				directionParent = directionFile;
+				while (getNode(query(directionFile, directionParent,directionAncestor)) != null) {
+					directionAncestor.add(directionParent);
+					directionParent = directionFile;	
+				}
 				path_direction = racine+direction_.get("path").get(0)+"/"+directionFile;
 			}
 			else {
@@ -50,7 +52,8 @@ public class MC extends VoCore {
 		}
 		
 		//Physical copy
-		
+		System.out.println(path_origin);
+		System.out.println(path_direction);
 		File file = new File(path_origin);
 		File file2 = new File(path_direction);
 		
@@ -70,13 +73,13 @@ public class MC extends VoCore {
 					FileUtils.copyDirectory(file, file2);
 					System.out.println("Copie dossier " +file.isDirectory());
 				} catch (Exception e) {
-					e.printStackTrace();
 					throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, e, ErrorType.TRANSIENT);
 				}
 			}
 		}
 		
 		try {
+			System.out.println(direction_.get("path").get(0));
 			updateDB(origin, originFile, originParent, originAncestor, directionFile, directionParent, directionAncestor, direction_.get("path").get(0));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -120,7 +123,7 @@ public class MC extends VoCore {
 		js.remove("ancestor");
 		js.put("node", directionFile);
 		js.put("parent", directionParent);
-		js.put("path", "nodes"+path);
+		js.put("path", "storage"+path);
 		js.put("ancestor", directionAncestor);
 
 		List<JSONObject> insertions = new ArrayList<JSONObject>();
@@ -144,7 +147,7 @@ public class MC extends VoCore {
 			json.remove("path");
 			json.put("parent", directionFile);
 			json.put("ancestor", directionAncestor);
-			json.put("path", "nodes"+path+fPath);
+			json.put("path", "storage"+path+fPath);
 
 			insertions.add(json);
 		}
@@ -161,7 +164,7 @@ public class MC extends VoCore {
 			json.remove("ancestor");
 			json.remove("path");
 			json.put("ancestor", _temp.get("ancestor"));
-			json.put("path", "nodes"+path+fPath);
+			json.put("path", "storage"+path+fPath);
 
 			insertions.add(json);
 		}
@@ -169,6 +172,7 @@ public class MC extends VoCore {
 		System.out.println("etape 3* insertion database");
 		//Insert the new representation in database
 		System.out.println("Insertion");
+		System.out.println(insertions);
 		insert(insertions);
 		System.out.println("Succès");
 	}

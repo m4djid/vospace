@@ -43,13 +43,9 @@ public class MoveCopy extends JobThread {
 			try {
 				mc.moveNode(target, direction, keepBytes);
 			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (JSONException e) {
-				e.printStackTrace();
 				throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, e, "Error while updating the database !", ErrorType.TRANSIENT);
 			} catch (IOException e) {
-				e.printStackTrace();
 				throw new UWSException(UWSException.INTERNAL_SERVER_ERROR, e, "Error while moving/copying the node to " +this.direction, ErrorType.TRANSIENT);
 			}
 

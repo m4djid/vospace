@@ -13,7 +13,7 @@ import com.mongodb.BasicDBObject;
 
 public class VoCore extends Db{
 
-	String racine = "/home/bouchair/PycharmProjects/VOSpace/nodes";
+	String racine = "/home/bouchair/PycharmProjects/VOSpace/storage";
 	
 	//Generate a name for the node when the value is ".auto"
 	String auto() {
